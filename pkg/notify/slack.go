@@ -10,6 +10,7 @@ import (
 )
 
 var (
+	// ErrNoNeedPostType is error message for not nosh.ScheduleTypeDelivery
 	ErrNoNeedPostType = fmt.Errorf("not nosh.ScheduleTypeDelivery")
 )
 
@@ -41,7 +42,7 @@ func RemindDeadline(ctx context.Context, webhookURL, channelName string, menus [
 	}
 
 	if err := slack.PostWebhookContext(ctx, webhookURL, &wm); err != nil {
-		return fmt.Errorf("slack.PostWebhookContext(ctx, webhookURL, %v): %w", nil, err)
+		return fmt.Errorf("slack.PostWebhookContext(ctx, webhookURL, %v): %w", wm, err)
 	}
 	return nil
 }
