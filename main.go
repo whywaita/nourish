@@ -64,7 +64,11 @@ func needRemindDeadline(schedules []nosh.ScheduleNode) []nosh.ScheduleNode {
 	var need []nosh.ScheduleNode
 
 	for _, schedule := range schedules {
-		until := time.Until(*schedule.DeadlineDate)
+		if schedule.Type != nosh.ScheduleTypeDeadline {
+			continue
+		}
+
+		until := time.Until(schedule.Date)
 		if until.Hours() < c.RemindHour {
 			need = append(need, schedule)
 		}
