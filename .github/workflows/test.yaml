@@ -1,0 +1,32 @@
+name: Test
+on:
+  push:
+    branches:
+      - "**"
+  pull_request: {}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: setup go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.x
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 1
+      - name: Build
+        run: |
+          go build .
+      - name: Lint
+        run: |
+          go install honnef.co/go/tools/cmd/staticcheck@latest
+          staticcheck ./...
+      - name: vet
+        run: |
+          go vet ./...
+      - name: Test
+        run: |
+          go test -v ./...
