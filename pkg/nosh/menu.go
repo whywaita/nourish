@@ -136,39 +136,39 @@ func GetMenuByScheduleID(ctx context.Context, cookies []*network.Cookie, userID,
 
 func getNutrition(selection *goquery.Selection) (*Nutrition, error) {
 	sugarAttr := selection.AttrOr("sugar", "0")
-	sugar, err := strconv.ParseFloat(sugarAttr, 10)
+	sugar, err := strconv.ParseFloat(sugarAttr, 64)
 	if err != nil {
-		return nil, fmt.Errorf("strconv.ParseFloat(%s, 10)", sugarAttr)
+		return nil, fmt.Errorf("strconv.ParseFloat(%s, 64)", sugarAttr)
 	}
 
 	salinityAttr := selection.AttrOr("salinity", "0")
-	sality, err := strconv.ParseFloat(salinityAttr, 10)
+	sality, err := strconv.ParseFloat(salinityAttr, 64)
 	if err != nil {
-		return nil, fmt.Errorf("strconv.ParseFloat(%s, 10)", salinityAttr)
+		return nil, fmt.Errorf("strconv.ParseFloat(%s, 64)", salinityAttr)
 	}
 
 	calorieAttr := selection.AttrOr("calories", "0")
-	calorie, err := strconv.ParseFloat(calorieAttr, 10)
+	calorie, err := strconv.ParseFloat(calorieAttr, 64)
 	if err != nil {
-		return nil, fmt.Errorf("strconv.ParseFloat(%s, 10)", calorieAttr)
+		return nil, fmt.Errorf("strconv.ParseFloat(%s, 64)", calorieAttr)
 	}
 
 	proteinAttr := selection.AttrOr("protein", "0")
-	protein, err := strconv.ParseFloat(proteinAttr, 10)
+	protein, err := strconv.ParseFloat(proteinAttr, 64)
 	if err != nil {
-		return nil, fmt.Errorf("strconv.ParseFloat(%s, 10)", proteinAttr)
+		return nil, fmt.Errorf("strconv.ParseFloat(%s, 64)", proteinAttr)
 	}
 
 	fiberAttr := selection.AttrOr("fiber", "0")
-	fiber, err := strconv.ParseFloat(fiberAttr, 10)
+	fiber, err := strconv.ParseFloat(fiberAttr, 64)
 	if err != nil {
-		return nil, fmt.Errorf("strconv.ParseFloat(%s, 10)", fiberAttr)
+		return nil, fmt.Errorf("strconv.ParseFloat(%s, 64)", fiberAttr)
 	}
 
 	lipidAttr := selection.AttrOr("lipid", "0")
-	lipid, err := strconv.ParseFloat(lipidAttr, 10)
+	lipid, err := strconv.ParseFloat(lipidAttr, 64)
 	if err != nil {
-		return nil, fmt.Errorf("strconv.ParseFloat(%s, 10)", lipidAttr)
+		return nil, fmt.Errorf("strconv.ParseFloat(%s, 64)", lipidAttr)
 	}
 
 	return &Nutrition{

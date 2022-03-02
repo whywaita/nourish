@@ -53,7 +53,7 @@ func init() {
 	if rh == "" {
 		rh = "24"
 	}
-	remindHour, err := strconv.ParseFloat(rh, 10)
+	remindHour, err := strconv.ParseFloat(rh, 64)
 	if err != nil {
 		log.Panicf("NOURISH_REMIND_HOUR is invalid format (%s): %+v", rh, err)
 	}
