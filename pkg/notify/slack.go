@@ -27,7 +27,7 @@ func RemindDeadline(ctx context.Context, webhookURL, channelName string, menus [
 %s
 `,
 		prettyTime(deadlineSchedule.Date),
-		prettyTime(*deadlineSchedule.DeadlineDate),
+		prettyTime(*deadlineSchedule.DeliveryDate),
 		deadlineSchedule.Link)
 	for _, menu := range menus {
 		text += fmt.Sprintf(`

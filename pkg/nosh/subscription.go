@@ -131,7 +131,7 @@ type ScheduleNode struct {
 	Link       string
 
 	// for ScheduleTypeDeadline
-	DeadlineDate     *time.Time
+	DeliveryDate     *time.Time
 	WillScheduleType *ScheduleType
 }
 
@@ -193,8 +193,8 @@ func toScheduleNode(selection *goquery.Selection, stType ScheduleType, year, mon
 		return nil, fmt.Errorf("strconv.Atoi(%s): %w", strings.TrimSpace(selection.Text()), err)
 	}
 
-	var deadlineDate *time.Time
-	deadlineDate = nil
+	var deliveryDate *time.Time
+	deliveryDate = nil
 	if stType == ScheduleTypeDeadline {
 		pText := strings.TrimSpace(dl.Find("p.schedule-daybox__desc").Text())
 		pText = strings.ReplaceAll(pText, "\n", "")
@@ -206,14 +206,14 @@ func toScheduleNode(selection *goquery.Selection, stType ScheduleType, year, mon
 			return nil, fmt.Errorf("time.Parse(%s, %s): %w", layout, dateText, err)
 		}
 		d := time.Date(year, t.Month(), t.Day(), 0, 0, 0, 0, JST)
-		deadlineDate = &d
+		deliveryDate = &d
 	}
 
 	return &ScheduleNode{
 		ScheduleID:   scheduleID,
 		Type:         stType,
 		Date:         time.Date(year, time.Month(month), day, 0, 0, 0, 0, JST),
-		DeadlineDate: deadlineDate,
+		DeliveryDate: deliveryDate,
 		Link:         link,
 	}, nil
 }
@@ -267,7 +267,7 @@ func fillDeadline(deadline, skip, delivery []ScheduleNode) []ScheduleNode {
 			Type:             d.Type,
 			Date:             d.Date,
 			Link:             d.Link,
-			DeadlineDate:     d.DeadlineDate,
+			DeliveryDate:     d.DeliveryDate,
 			WillScheduleType: &dd.Type,
 		})
 	}
