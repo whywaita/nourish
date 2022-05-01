@@ -3,10 +3,11 @@ package nosh
 import (
 	"context"
 	"fmt"
-	"log"
 	"strconv"
 	"strings"
 	"time"
+
+	"go.uber.org/zap"
 
 	"github.com/chromedp/cdproto/dom"
 	"github.com/chromedp/cdproto/network"
@@ -21,17 +22,17 @@ var (
 )
 
 // GetSchedule get schedules in now and next month
-func GetSchedule(ctx context.Context, cookies []*network.Cookie, userID int) ([]ScheduleNode, []ScheduleNode, []ScheduleNode, error) {
+func GetSchedule(ctx context.Context, cookies []*network.Cookie, userID int, logger *zap.Logger) ([]ScheduleNode, []ScheduleNode, []ScheduleNode, error) {
 	now := time.Now()
 
 	year := now.Year()
 	month := now.Month()
-	deadline, skip, delivery, err := GetScheduleMonth(ctx, cookies, userID, year, int(month))
+	deadline, skip, delivery, err := GetScheduleMonth(ctx, cookies, userID, year, int(month), logger)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("GetScheduleMonth(ctx, cookies, userID, %d, %d): %w", year, month, err)
 	}
 
-	ndeadline, nskip, ndelivery, err := GetScheduleMonth(ctx, cookies, userID, year, int(month+1))
+	ndeadline, nskip, ndelivery, err := GetScheduleMonth(ctx, cookies, userID, year, int(month+1), logger)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("GetScheduleMonth(ctx, cookies, userID, %d, %d): %w", year, month, err)
 	}
@@ -43,7 +44,7 @@ func GetSchedule(ctx context.Context, cookies []*network.Cookie, userID int) ([]
 }
 
 // GetScheduleMonth get schedules in year/month
-func GetScheduleMonth(ctx context.Context, cookies []*network.Cookie, userID int, year, month int) ([]ScheduleNode, []ScheduleNode, []ScheduleNode, error) {
+func GetScheduleMonth(ctx context.Context, cookies []*network.Cookie, userID int, year, month int, logger *zap.Logger) ([]ScheduleNode, []ScheduleNode, []ScheduleNode, error) {
 	var deadline, skip, delivery []ScheduleNode
 
 	if err := chromedp.Run(ctx, chromedp.Tasks{
@@ -63,7 +64,7 @@ func GetScheduleMonth(ctx context.Context, cookies []*network.Cookie, userID int
 				return fmt.Errorf("html.Parse(strings.NewReader(renderedHTML)): %w", err)
 			}
 
-			deadline, skip, delivery, err = ParseCalendar(doc, year, month)
+			deadline, skip, delivery, err = ParseCalendar(doc, year, month, logger)
 			if err != nil {
 				return fmt.Errorf("extractCalendar(doc, %d, %d): %w", year, month, err)
 			}
@@ -136,13 +137,13 @@ type ScheduleNode struct {
 }
 
 // ParseCalendar parse calendar
-func ParseCalendar(root *goquery.Document, year, month int) ([]ScheduleNode, []ScheduleNode, []ScheduleNode, error) {
+func ParseCalendar(root *goquery.Document, year, month int, logger *zap.Logger) ([]ScheduleNode, []ScheduleNode, []ScheduleNode, error) {
 	var deadline, skip, delivery []ScheduleNode
 
 	root.Find(ClassDeadline).Each(func(i int, selection *goquery.Selection) {
 		sn, err := toScheduleNode(selection, MarshalScheduleType(ClassDeadline), year, month)
 		if err != nil {
-			log.Printf("toScheduleNode(): %+v", err)
+			logger.Info("toScheduleNode()", zap.Error(err))
 			return
 		}
 		deadline = append(deadline, *sn)
@@ -151,7 +152,7 @@ func ParseCalendar(root *goquery.Document, year, month int) ([]ScheduleNode, []S
 	root.Find(ClassSkip).Each(func(i int, selection *goquery.Selection) {
 		sn, err := toScheduleNode(selection, MarshalScheduleType(ClassSkip), year, month)
 		if err != nil {
-			log.Printf("toScheduleNode(): %+v", err)
+			logger.Info("toScheduleNode()", zap.Error(err))
 			return
 		}
 		skip = append(skip, *sn)
@@ -160,7 +161,7 @@ func ParseCalendar(root *goquery.Document, year, month int) ([]ScheduleNode, []S
 	root.Find(ClassDelivery).Each(func(i int, selection *goquery.Selection) {
 		sn, err := toScheduleNode(selection, MarshalScheduleType(ClassDelivery), year, month)
 		if err != nil {
-			log.Printf("toScheduleNode(): %+v", err)
+			logger.Info("toScheduleNode()", zap.Error(err))
 			return
 		}
 		delivery = append(delivery, *sn)

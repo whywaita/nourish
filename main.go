@@ -9,16 +9,26 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/whywaita/nourish/pkg/notify"
-
-	"github.com/whywaita/nourish/pkg/nosh"
+	"github.com/bluele/zapslack"
+	"go.uber.org/zap"
 
 	"github.com/chromedp/chromedp"
+	"github.com/whywaita/nourish/pkg/nosh"
+	"github.com/whywaita/nourish/pkg/notify"
 )
 
 func main() {
-	if err := run(); err != nil {
-		log.Fatal(err)
+	logger, err := zap.NewProduction()
+	if err != nil {
+		log.Fatalf("failed to zap.NewProduction: %+v", err)
+	}
+	logger = logger.WithOptions(
+		// no notification in debug level
+		zap.Hooks(zapslack.NewSlackHook(c.SlackWebhookURL, zap.InfoLevel).GetHook()),
+	)
+
+	if err := run(logger); err != nil {
+		logger.Error(err.Error())
 	}
 }
 
@@ -77,7 +87,7 @@ func needRemindDeadline(schedules []nosh.ScheduleNode) []nosh.ScheduleNode {
 	return need
 }
 
-func run() error {
+func run(logger *zap.Logger) error {
 	ctx, cancel := chromedp.NewContext(
 		context.Background(),
 		//chromedp.WithDebugf(log.Printf),
@@ -89,7 +99,7 @@ func run() error {
 		return fmt.Errorf("login(ctx): %w", err)
 	}
 
-	deadline, _, _, err := nosh.GetSchedule(ctx, identity.Cookies, identity.UserID)
+	deadline, _, _, err := nosh.GetSchedule(ctx, identity.Cookies, identity.UserID, logger)
 	if err != nil {
 		return fmt.Errorf("GetSchedule(ctx, cookie, %d): %w", identity.UserID, err)
 	}
