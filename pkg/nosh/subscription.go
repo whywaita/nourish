@@ -201,7 +201,7 @@ func toScheduleNode(selection *goquery.Selection, stType ScheduleType, year, mon
 		pText = strings.ReplaceAll(pText, "\n", "")
 		pText = strings.ReplaceAll(pText, " ", "")
 		dateText := strings.Trim(pText, "変更締切")
-		layout := "1月2日"
+		layout := "1月2日分"
 		t, err := time.Parse(layout, dateText)
 		if err != nil {
 			return nil, fmt.Errorf("time.Parse(%s, %s): %w", layout, dateText, err)
