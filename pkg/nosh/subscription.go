@@ -143,7 +143,7 @@ func ParseCalendar(root *goquery.Document, year, month int, logger *zap.Logger) 
 	root.Find(ClassDeadline).Each(func(i int, selection *goquery.Selection) {
 		sn, err := toScheduleNode(selection, MarshalScheduleType(ClassDeadline), year, month)
 		if err != nil {
-			logger.Info("toScheduleNode()", zap.Error(err))
+			logger.Info(fmt.Sprintf("toScheduleNode(): %+v", err))
 			return
 		}
 		deadline = append(deadline, *sn)
@@ -152,7 +152,7 @@ func ParseCalendar(root *goquery.Document, year, month int, logger *zap.Logger) 
 	root.Find(ClassSkip).Each(func(i int, selection *goquery.Selection) {
 		sn, err := toScheduleNode(selection, MarshalScheduleType(ClassSkip), year, month)
 		if err != nil {
-			logger.Info("toScheduleNode()", zap.Error(err))
+			logger.Info(fmt.Sprintf("toScheduleNode(): %+v", err))
 			return
 		}
 		skip = append(skip, *sn)
@@ -161,7 +161,7 @@ func ParseCalendar(root *goquery.Document, year, month int, logger *zap.Logger) 
 	root.Find(ClassDelivery).Each(func(i int, selection *goquery.Selection) {
 		sn, err := toScheduleNode(selection, MarshalScheduleType(ClassDelivery), year, month)
 		if err != nil {
-			logger.Info("toScheduleNode()", zap.Error(err))
+			logger.Info(fmt.Sprintf("toScheduleNode(): %+v", err))
 			return
 		}
 		delivery = append(delivery, *sn)
