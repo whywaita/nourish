@@ -11,6 +11,7 @@ import (
 
 	"github.com/bluele/zapslack"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 
 	"github.com/chromedp/chromedp"
 	"github.com/whywaita/nourish/pkg/nosh"
@@ -25,9 +26,16 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to zap.NewProduction: %+v", err)
 	}
+	sh := &zapslack.SlackHook{
+		HookURL:        c.SlackWebhookURL,
+		AcceptedLevels: []zapcore.Level{zapcore.InfoLevel},
+		Username:       notify.Username,
+		IconURL:        notify.IconURL,
+	}
+
 	logger = logger.WithOptions(
 		// no notification in debug level
-		zap.Hooks(zapslack.NewSlackHook(c.SlackWebhookURL, zap.InfoLevel).GetHook()),
+		zap.Hooks(sh.GetHook()),
 	)
 
 	if err := run(logger); err != nil {

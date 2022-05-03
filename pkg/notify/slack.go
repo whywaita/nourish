@@ -14,6 +14,13 @@ var (
 	ErrNoNeedPostType = fmt.Errorf("not nosh.ScheduleTypeDelivery")
 )
 
+const (
+	// Username is username of slack
+	Username = "nourish"
+	// IconURL is URL of icon
+	IconURL = "https://1.bp.blogspot.com/-VdRARu0Xvm0/Xlyf8ZzqClI/AAAAAAABXrI/fjsmV2v7UB0UHJzmXAfB-7zjXFvxJx9QgCNcBGAsYHQ/s1600/pulp_mold_obentou.png"
+)
+
 // RemindDeadline post menus to slack
 func RemindDeadline(ctx context.Context, webhookURL, channelName string, menus []nosh.Menu, deadlineSchedule nosh.ScheduleNode) error {
 	if deadlineSchedule.Type != nosh.ScheduleTypeDeadline {
@@ -35,8 +42,8 @@ func RemindDeadline(ctx context.Context, webhookURL, channelName string, menus [
 	}
 
 	wm := slack.WebhookMessage{
-		Username: "nourish",
-		IconURL:  "https://1.bp.blogspot.com/-VdRARu0Xvm0/Xlyf8ZzqClI/AAAAAAABXrI/fjsmV2v7UB0UHJzmXAfB-7zjXFvxJx9QgCNcBGAsYHQ/s1600/pulp_mold_obentou.png",
+		Username: Username,
+		IconURL:  IconURL,
 		Channel:  channelName,
 		Text:     text,
 	}
