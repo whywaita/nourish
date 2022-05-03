@@ -18,7 +18,10 @@ import (
 )
 
 func main() {
-	logger, err := zap.NewProduction()
+	logConf := zap.NewProductionConfig()
+	logConf.OutputPaths = []string{"stdout"}
+	logConf.Level = zap.NewAtomicLevelAt(zap.DebugLevel)
+	logger, err := logConf.Build()
 	if err != nil {
 		log.Fatalf("failed to zap.NewProduction: %+v", err)
 	}
@@ -74,7 +77,13 @@ func needRemindDeadline(schedules []nosh.ScheduleNode) []nosh.ScheduleNode {
 	var need []nosh.ScheduleNode
 
 	for _, schedule := range schedules {
+		// not need remind if not deadline
 		if schedule.Type != nosh.ScheduleTypeDeadline {
+			continue
+		}
+
+		// not need remind if not deadline of delivery
+		if *schedule.WillScheduleType != nosh.ScheduleTypeDelivery {
 			continue
 		}
 
@@ -105,9 +114,11 @@ func run(logger *zap.Logger) error {
 	}
 	needRemind := needRemindDeadline(deadline)
 	if len(needRemind) == 0 {
-		log.Println("no need remind")
+		logger.Debug("no need remind")
 		return nil
 	}
+
+	logger.Debug("will notify deadline", zap.Any("schedules", needRemind))
 
 	for _, schedule := range needRemind {
 		menus, err := nosh.GetMenuByScheduleID(ctx, identity.Cookies, identity.UserID, schedule.ScheduleID)
@@ -121,6 +132,6 @@ func run(logger *zap.Logger) error {
 		}
 	}
 
-	fmt.Println("done")
+	logger.Debug("remind done")
 	return nil
 }
