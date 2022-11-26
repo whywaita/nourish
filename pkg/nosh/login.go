@@ -29,8 +29,8 @@ func Login(ctx context.Context, email, password string) (*UserInformation, error
 
 	if err := chromedp.Run(ctx, chromedp.Tasks{
 		chromedp.Navigate(BaseAPI + "/login"),
-		chromedp.WaitVisible(`//input[@name="email"]`),
-		chromedp.SendKeys(`//input[@name="email"]`, email),
+		chromedp.WaitVisible(`//input[@name="login_id"]`),
+		chromedp.SendKeys(`//input[@name="login_id"]`, email),
 		chromedp.SendKeys(`//input[@name="password"]`, password),
 		chromedp.Submit(`//input[@name="password"]`),
 		chromedp.Location(&dashboardURL),
