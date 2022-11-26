@@ -6,6 +6,10 @@ ENV CGO_ENABLED=0
 ENV GOOS=linux
 ENV GOARCH=amd64
 
+COPY go.mod go.mod
+COPY go.sum go.sum
+RUN go mod download
+
 COPY . .
 RUN go build -o ./app .
 
