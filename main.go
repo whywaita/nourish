@@ -27,10 +27,14 @@ func main() {
 		log.Fatalf("failed to zap.NewProduction: %+v", err)
 	}
 	sh := &zapslack.SlackHook{
-		HookURL:        c.SlackWebhookURL,
-		AcceptedLevels: []zapcore.Level{zapcore.InfoLevel},
-		Username:       notify.Username,
-		IconURL:        notify.IconURL,
+		HookURL: c.SlackWebhookURL,
+		AcceptedLevels: []zapcore.Level{
+			zapcore.InfoLevel,
+			zapcore.WarnLevel,
+			zapcore.ErrorLevel,
+		},
+		Username: notify.Username,
+		IconURL:  notify.IconURL,
 	}
 
 	logger = logger.WithOptions(
@@ -111,10 +115,15 @@ func run(logger *zap.Logger) error {
 	)
 	defer cancel()
 
+	ctx, timeout := context.WithTimeout(ctx, 5*time.Minute)
+	defer timeout()
+
+	logger.Debug("start login...")
 	identity, err := nosh.Login(ctx, c.Email, c.Password)
 	if err != nil {
 		return fmt.Errorf("login(ctx): %w", err)
 	}
+	logger.Debug("login successfully")
 
 	deadline, _, _, err := nosh.GetSchedule(ctx, identity.Cookies, identity.UserID, logger)
 	if err != nil {
