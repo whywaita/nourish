@@ -9,11 +9,8 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/chromedp/cdproto/dom"
-	"github.com/chromedp/cdproto/network"
-	"github.com/chromedp/chromedp"
-
 	"github.com/PuerkitoBio/goquery"
+	"github.com/chromedp/cdproto/network"
 )
 
 var (
@@ -47,32 +44,20 @@ func GetSchedule(ctx context.Context, cookies []*network.Cookie, userID int, log
 func GetScheduleMonth(ctx context.Context, cookies []*network.Cookie, userID int, year, month int, logger *zap.Logger) ([]ScheduleNode, []ScheduleNode, []ScheduleNode, error) {
 	var deadline, skip, delivery []ScheduleNode
 
-	if err := chromedp.Run(ctx, chromedp.Tasks{
-		SetCookiesAction(cookies),
-		chromedp.Navigate(fmt.Sprintf("%s/mypage/subscription/%d?month=%d-%02d", BaseAPI, userID, year, month)),
-		chromedp.ActionFunc(func(ctx context.Context) error {
-			node, err := dom.GetDocument().Do(ctx)
-			if err != nil {
-				return fmt.Errorf("dom.GetDocument().Do(ctx): %w", err)
-			}
-			h, err := dom.GetOuterHTML().WithNodeID(node.NodeID).Do(ctx)
-			if err != nil {
-				return fmt.Errorf("dom.GetOuterHTML().WithNodeID(node.NodeID).Do(ctx): %w", err)
-			}
-			doc, err := goquery.NewDocumentFromReader(strings.NewReader(h))
-			if err != nil {
-				return fmt.Errorf("html.Parse(strings.NewReader(renderedHTML)): %w", err)
-			}
+	htmlURL := fmt.Sprintf("%s/mypage/subscription/%d?month=%d-%02d", BaseAPI, userID, year, month)
+	body, err := getAuthorizedOuterHTML(ctx, cookies, htmlURL)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("getAuthorizedOuterHTML(ctx, cookies, %s): %w", htmlURL, err)
+	}
 
-			deadline, skip, delivery, err = ParseCalendar(doc, year, month, logger)
-			if err != nil {
-				return fmt.Errorf("extractCalendar(doc, %d, %d): %w", year, month, err)
-			}
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(body))
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("html.Parse(strings.NewReader(renderedHTML)): %w", err)
+	}
 
-			return nil
-		}),
-	}); err != nil {
-		return nil, nil, nil, fmt.Errorf("chromedp.Run(ctx): %w", err)
+	deadline, skip, delivery, err = ParseCalendar(doc, year, month, logger)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("extractCalendar(doc, %d, %d): %w", year, month, err)
 	}
 
 	return deadline, skip, delivery, nil
