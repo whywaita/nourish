@@ -9,9 +9,6 @@ import (
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
-	"github.com/chromedp/cdproto/dom"
-	"github.com/chromedp/chromedp"
-
 	"github.com/chromedp/cdproto/network"
 )
 
@@ -56,80 +53,76 @@ func (m Menu) PrettyString() string {
 
 // GetMenuByScheduleID get menus in scheduleID
 func GetMenuByScheduleID(ctx context.Context, cookies []*network.Cookie, userID, scheduleID int) ([]Menu, error) {
+	body, err := getAuthorizedOuterHTML(ctx, cookies, getMenuURL(userID, scheduleID))
+	if err != nil {
+		return nil, fmt.Errorf("getAuthorizedOuterHTML(ctx, cookies, %s): %w", getMenuURL(userID, scheduleID), err)
+	}
+
+	menus, err := getMenuByScheduleID(body)
+	if err != nil {
+		return nil, fmt.Errorf("getMenuByScheduleID(body): %w", err)
+	}
+
+	return menus, nil
+}
+
+func getMenuByScheduleID(body string) ([]Menu, error) {
 	var menus []Menu
 
-	if err := chromedp.Run(ctx, chromedp.Tasks{
-		SetCookiesAction(cookies),
-		chromedp.Navigate(getMenuURL(userID, scheduleID)),
-		chromedp.ActionFunc(func(ctx context.Context) error {
-			node, err := dom.GetDocument().Do(ctx)
-			if err != nil {
-				return fmt.Errorf("dom.GetDocument().Do(ctx): %w", err)
-			}
-			h, err := dom.GetOuterHTML().WithNodeID(node.NodeID).Do(ctx)
-			if err != nil {
-				return fmt.Errorf("dom.GetOuterHTML().WithNodeID(node.NodeID).Do(ctx): %w", err)
-			}
-			doc, err := goquery.NewDocumentFromReader(strings.NewReader(h))
-			if err != nil {
-				return fmt.Errorf("html.Parse(strings.NewReader(renderedHTML)): %w", err)
-			}
-
-			doc.Find("dl.foodArray").Each(func(i int, selection *goquery.Selection) {
-				m := Menu{}
-
-				noDelivery := selection.Find("span.no-delivery").Text()
-				if noDelivery != "" {
-					// no-delivery is true, ignore
-					return
-				}
-
-				a := selection.Find("a.modalOpenButton")
-				modalID, exist := a.Attr("data-izimodal-open")
-				if exist {
-					menuID := strings.TrimPrefix(modalID, "#modal-")
-					id, err := strconv.Atoi(menuID)
-					if err != nil {
-						return
-					}
-					m.ID = id
-				}
-
-				img, exist := a.Find("img").Attr("src")
-				if exist {
-					u, err := url.Parse(img)
-					if err != nil {
-						return
-					}
-					m.ImageURL = u
-				}
-
-				name := selection.Find("p.name").Text()
-				m.Name = name
-
-				nu, err := getNutrition(selection)
-				if err != nil {
-					return
-				}
-				m.Nutrition = *nu
-
-				c := strings.TrimSuffix(selection.Find("span.count").Text(), "食")
-				if c != "" {
-					count, err := strconv.Atoi(c)
-					if err != nil {
-						return
-					}
-					m.Count = count
-				}
-
-				menus = append(menus, m)
-			})
-
-			return nil
-		}),
-	}); err != nil {
-		return nil, fmt.Errorf("chromedp.Run(ctx): %w", err)
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(body))
+	if err != nil {
+		return nil, fmt.Errorf("html.Parse(strings.NewReader(renderedHTML)): %w", err)
 	}
+
+	doc.Find("dl.foodArray").Each(func(i int, selection *goquery.Selection) {
+		m := Menu{}
+
+		noDelivery := selection.Find("span.no-delivery").Text()
+		if noDelivery != "" {
+			// no-delivery is true, ignore
+			return
+		}
+
+		a := selection.Find("a.modalOpenButton")
+		modalID, exist := a.Attr("data-izimodal-open")
+		if exist {
+			menuID := strings.TrimPrefix(modalID, "#modal-")
+			id, err := strconv.Atoi(menuID)
+			if err != nil {
+				return
+			}
+			m.ID = id
+		}
+
+		img, exist := a.Find("img").Attr("src")
+		if exist {
+			u, err := url.Parse(img)
+			if err != nil {
+				return
+			}
+			m.ImageURL = u
+		}
+
+		name := selection.Find("p.name").Text()
+		m.Name = name
+
+		nu, err := getNutrition(selection)
+		if err != nil {
+			return
+		}
+		m.Nutrition = *nu
+
+		c := strings.TrimSuffix(selection.Find("span.count").Text(), "食")
+		if c != "" {
+			count, err := strconv.Atoi(c)
+			if err != nil {
+				return
+			}
+			m.Count = count
+		}
+
+		menus = append(menus, m)
+	})
 
 	return menus, nil
 }
